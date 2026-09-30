@@ -1,0 +1,23 @@
+#include <stdio.h>
+
+// Definimos un struct para representar una persona
+struct Persona {
+    char nombre[30];
+    int edad;
+};
+
+int main() {
+    // Arreglo de 3 structs, inicializados directamente
+    struct Persona personas[3] = {
+        {"Ana", 22},
+        {"Luis", 25},
+        {"Marta", 19}
+    };
+
+    // Bucle for para recorrer el arreglo e imprimir cada struct
+    for (int i = 0; i < 3; i++) {
+        printf("Nombre: %s, Edad: %d\n", personas[i].nombre, personas[i].edad);
+    }
+
+    return 0;
+}

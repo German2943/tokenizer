@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include "tokenizer.h"
 char *transicion_getter(char caracter, char *estado)
 {
 
@@ -166,8 +167,85 @@ int es_aceptacion(int valor)
     return 1;
 }
 
-int maximal_munch(char *str)
+char *keyword_identifier(char *lexem)
 {
+
+    char lexemas_posibles[44][15] = {
+        "auto",
+        "double",
+        "int",
+        "struct",
+        "break",
+        "else",
+        "long",
+        "switch",
+        "case",
+        "enum",
+        "register",
+        "typedef",
+        "char",
+        "extern",
+        "return",
+        "union",
+        "const",
+        "float",
+        "short",
+        "unsigned",
+        "continue",
+        "for",
+        "signed",
+        "void",
+        "default",
+        "goto",
+        "sizeof",
+        "volatile",
+        "do",
+        "if",
+        "static",
+        "while",
+        "scanf",
+        "print",
+        "define",
+        "elif",
+        "endif",
+        "error",
+        "if",
+        "ifdef",
+        "ifndef",
+        "include",
+        "message",
+        "undef"};
+    char keyword_token[44][15] = {"AUTO", "DOUBLE", "INT", "STRUCT", "BREAK", "ELSE", "LONG", "SWITCH", "CASE", "ENUM", "REGISTER", "TYPEDEF", "CHAR", "EXTERN", "RETURN", "UNION", "CONST", "FLOAT", "SHORT", "UNSIGNED", "CONTINUE", "FOR", "SIGNED", "VOID", "DEFAULT", "GOTO", "SIZEOF", "VOLATILE", "DO", "IF", "STATIC", "WHILE", "READ", "WRITE", "DEFINE", "ELIF", "ENDIF", "ERROR", "IF", "IFDEF", "IFNDEF", "INCLUDE", "MESSAGE", "UNDEF"};
+
+    /*
+    char lexemas_posibles[4][15] = {"SELECT", "WHERE", "AND", "OR"};
+    char keyword_token[4][15] = {"SELECT", "WHERE", "AND", "OR"};
+    */
+    char *match;
+    int length = sizeof(lexemas_posibles) / sizeof(lexemas_posibles[0]);
+    int i = 0;
+    while (i < length)
+    {
+
+        if (strcmp(lexem, lexemas_posibles[i]) == 0)
+        {
+
+            match = (char *)malloc(sizeof(char) * strlen(keyword_token[i]));
+            match = strcpy(match, keyword_token[i]);
+
+            return match;
+        }
+
+        i++;
+    }
+
+    match = (char *)malloc(sizeof(char) * 3);
+    match = strcpy(match, "ID");
+    return match;
+}
+int maximalMunch(char *str, TOKEN **tokens, int *capacidad_tokens, int *token_counter)
+{
+
     int inicio = 0;
 
     while (inicio < strlen(str))
@@ -204,25 +282,119 @@ int maximal_munch(char *str)
             {
                 temp[x] = str[inicio + x];
             }
-            char *tempst = lexem_identifier(temp);
+            printf("version primitiva\n");
+            char *label = token_assigner(estado);
+            if (label[0] == 'I' && label[1] == 'D')
+            {
+
+                free(label);
+                label = NULL;
+                label = keyword_identifier(temp);
+            }
+            if ((*token_counter) >= (*capacidad_tokens))
+            {
+                (*capacidad_tokens) *= 2;
+                (*tokens) = realloc((*tokens), sizeof(TOKEN) * (*capacidad_tokens));
+            }
+
+            (*tokens)[(*token_counter)].label = (char *)malloc(sizeof(char) * strlen(label));
+            (*tokens)[(*token_counter)].label = strcpy((*tokens)[(*token_counter)].label, label);
+
+            (*tokens)[(*token_counter)].lexem = (char *)malloc(sizeof(char) * strlen(temp));
+            (*tokens)[(*token_counter)].lexem = strcpy((*tokens)[(*token_counter)].lexem, temp);
+
+            free(label);
             printf("(\"%s\",%s)\n", temp, token_assigner(estado));
-            free(tempst);
             inicio = ultima_pos_aceptora;
+            (*token_counter)++;
         }
     }
 
     return 0;
 }
-void reader(FILE *f)
+int maximal_munch(char *str, TOKEN **tokens, int *capacidad_tokens, int *token_counter)
+{
+    int inicio = 0;
+
+    while (inicio < strlen(str))
+    {
+        int estado = 0;
+        int ultima_pos_aceptora = -1;
+        int ultimo_token_aceptado = -1;
+        int pos = inicio;
+        while (pos < strlen(str))
+        {
+            char buffer[12];
+            int siguiente = atoi(transicion_getter(str[pos], buffer));
+            if (siguiente == 253)
+                break;
+            estado = siguiente;
+            pos++;
+            if (es_aceptacion(estado) == 0)
+            {
+                ultima_pos_aceptora = pos;
+                ultimo_token_aceptado = estado;
+            }
+        }
+
+        if (ultima_pos_aceptora == -1)
+        {
+            inicio++;
+        }
+        else
+        {
+            char temp[ultima_pos_aceptora - inicio + 1];
+            temp[ultima_pos_aceptora - inicio] = '\0';
+            for (int x = 0; x < ultima_pos_aceptora - inicio; x++)
+            {
+                temp[x] = str[inicio + x];
+            }
+            char *token_label = (char *)malloc(sizeof(char) * 15);
+            token_label = token_assigner(estado);
+
+            if (token_label[0] == 'I' && token_label[1] == 'D')
+            {
+
+                free(token_label);
+                token_label = NULL;
+
+                token_label = keyword_identifier(temp);
+            }
+            TOKEN new_token;
+            new_token.label = token_label;
+
+            new_token.lexem = temp;
+            if ((*token_counter) >= *capacidad_tokens)
+            {
+                (*capacidad_tokens) = (*capacidad_tokens) * 2;
+                (*tokens) = realloc((*tokens), (*capacidad_tokens) * sizeof(TOKEN));
+            }
+
+            (*tokens)[(*token_counter)].label = (char *)malloc(sizeof(char) * strlen(token_label));
+            strcpy((*tokens)[(*token_counter)].label, token_label);
+
+            (*tokens)[(*token_counter)].lexem = (char *)malloc(sizeof(char) * strlen(temp));
+            strcpy((*tokens)[(*token_counter)].lexem, temp);
+
+            free(token_label);
+
+            inicio = ultima_pos_aceptora;
+            (*token_counter)++;
+        }
+    }
+
+    return 0;
+}
+void reader(FILE *f, TOKEN **tokens, int *capacidad_tokens, int *token_counter)
 {
     char *raw_chars = string_divider(f);
 
     int index_buffer = 0;
     int capacidad_buffer = 100;
     char *buffer = (char *)malloc(sizeof(char) * capacidad_buffer);
-    for (int i = 0; i < strlen(raw_chars) - 1; i++)
+    for (int i = 0; i <= strlen(raw_chars); i++)
     {
-        if (isspace(raw_chars[i]))
+        if (isspace(raw_chars[i]) || i >= strlen(raw_chars))
         {
             if (strlen(buffer) == 0)
             {
@@ -236,7 +408,8 @@ void reader(FILE *f)
 
             buffer[index_buffer] = '\0';
             index_buffer = 0;
-            maximal_munch(buffer);
+            maximalMunch(buffer, tokens, capacidad_tokens, token_counter);
+
             continue;
         }
         if (index_buffer >= capacidad_buffer)
@@ -248,11 +421,43 @@ void reader(FILE *f)
         buffer[index_buffer] = raw_chars[i];
         index_buffer++;
     }
+
     free(buffer);
     free(raw_chars);
 }
+
+char no_terminales[] = {'Q', 'L', 'l', 'W', 'E', 'e', 'T', 't', 'F', 'C', 'O', 'V'};
+
+char simbolo_inicial = 'Q';
+
+char terminales[][15] = {"SELECT", "WHERE", "AND", "OR", "EQ", "NOT_EQ", "GT", "LT",
+                         "GTEQ", "LTEQ", "ID", "INT_NUM", "STRING", "COMMA",
+                         "SEMICOLON", "LPAR", "RPAR", "$"};
+
 int main(void)
 {
+    int capacidad_tokens = 100;
+    int token_counter = 0;
+    TOKEN(*tokens);
+    tokens = (TOKEN *)malloc(sizeof(TOKEN) * capacidad_tokens);
 
-    reader(fopen("testing.txt", "r"));
+    reader(fopen("testing.txt", "r"), &tokens, &capacidad_tokens, &token_counter);
+
+    printf("\ntokens generados\n");
+
+    for (int i = 0; i < token_counter; i++)
+    {
+        printf("#%d label=\"%s\" lexem=\"%s\"\n", i, tokens[i].label, tokens[i].lexem);
+    }
+    // int ok = parsear();
+
+    for (int i = 0; i < token_counter; i++)
+    {
+        free((tokens[i]).label);
+        free((tokens[i]).lexem);
+    }
+    // printf(ok ? "Consulta valida\n" : "Consulta invalida\n");
+
+    // return ok ? 0 : 1;
+    return 0;
 }

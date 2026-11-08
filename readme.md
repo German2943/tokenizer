@@ -1,3 +1,14 @@
+# HOW TO EXECUTE (tested in a linux OS)
+---
+All the header files, C files and .txt files are required to run the tokenizer
+run in a terminal inside the folder where resides all of the files in the repository the following commands:
+
+
+gcc utils.c tokenizer.c -o x
+
+
+./x
+
 # Alphabet
 ---
 Σ={a, b, c, d, e, f, g, h, i, h, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, _, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, [, ], (, ), {, }, ., ',', ;, :, ?, ~, +, -, *, /, %, =, <, >, !, &, |, ^, ", ', \, #, ' ', '\t', '\n', '\r', '\v', '\f', EOF}

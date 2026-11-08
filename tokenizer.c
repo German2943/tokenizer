@@ -1,3 +1,4 @@
+#include "utils.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -83,33 +84,6 @@ char *lexem_identifier(char *lexem) // given a str, gives what is its state
         estado[strlen(lexem) + 1] = '\0';
     }
     return estado;
-}
-
-char *string_divider(FILE *f) // reads the input file and makes an array with all its characters
-{
-
-    int capacidad = 100;
-    int elementos = 0;
-    char *ptr = (char *)malloc(sizeof(char) * capacidad);
-    char *tmp;
-
-    int c;
-    int iteration = 0;
-    while ((c = fgetc(f)) != EOF)
-    {
-        if (elementos >= capacidad)
-        {
-            capacidad = capacidad * 2;
-            tmp = (char *)realloc(ptr, capacidad);
-            ptr = tmp;
-        }
-
-        ptr[iteration] = (char)c;
-        elementos++;
-        iteration++;
-    }
-    ptr[elementos] = '\0';
-    return ptr;
 }
 
 char *token_assigner(int estado) // given an state, tells the token it produces
@@ -312,79 +286,7 @@ int maximalMunch(char *str, TOKEN **tokens, int *capacidad_tokens, int *token_co
 
     return 0;
 }
-int maximal_munch(char *str, TOKEN **tokens, int *capacidad_tokens, int *token_counter)
-{
-    int inicio = 0;
 
-    while (inicio < strlen(str))
-    {
-        int estado = 0;
-        int ultima_pos_aceptora = -1;
-        int ultimo_token_aceptado = -1;
-        int pos = inicio;
-        while (pos < strlen(str))
-        {
-            char buffer[12];
-            int siguiente = atoi(transicion_getter(str[pos], buffer));
-            if (siguiente == 253)
-                break;
-            estado = siguiente;
-            pos++;
-            if (es_aceptacion(estado) == 0)
-            {
-                ultima_pos_aceptora = pos;
-                ultimo_token_aceptado = estado;
-            }
-        }
-
-        if (ultima_pos_aceptora == -1)
-        {
-            inicio++;
-        }
-        else
-        {
-            char temp[ultima_pos_aceptora - inicio + 1];
-            temp[ultima_pos_aceptora - inicio] = '\0';
-            for (int x = 0; x < ultima_pos_aceptora - inicio; x++)
-            {
-                temp[x] = str[inicio + x];
-            }
-            char *token_label = (char *)malloc(sizeof(char) * 15);
-            token_label = token_assigner(estado);
-
-            if (token_label[0] == 'I' && token_label[1] == 'D')
-            {
-
-                free(token_label);
-                token_label = NULL;
-
-                token_label = keyword_identifier(temp);
-            }
-            TOKEN new_token;
-            new_token.label = token_label;
-
-            new_token.lexem = temp;
-            if ((*token_counter) >= *capacidad_tokens)
-            {
-                (*capacidad_tokens) = (*capacidad_tokens) * 2;
-                (*tokens) = realloc((*tokens), (*capacidad_tokens) * sizeof(TOKEN));
-            }
-
-            (*tokens)[(*token_counter)].label = (char *)malloc(sizeof(char) * strlen(token_label));
-            strcpy((*tokens)[(*token_counter)].label, token_label);
-
-            (*tokens)[(*token_counter)].lexem = (char *)malloc(sizeof(char) * strlen(temp));
-            strcpy((*tokens)[(*token_counter)].lexem, temp);
-
-            free(token_label);
-
-            inicio = ultima_pos_aceptora;
-            (*token_counter)++;
-        }
-    }
-
-    return 0;
-}
 void reader(FILE *f, TOKEN **tokens, int *capacidad_tokens, int *token_counter)
 {
     char *raw_chars = string_divider(f);
@@ -449,15 +351,13 @@ int main(void)
     {
         printf("#%d label=\"%s\" lexem=\"%s\"\n", i, tokens[i].label, tokens[i].lexem);
     }
-    // int ok = parsear();
 
     for (int i = 0; i < token_counter; i++)
     {
         free((tokens[i]).label);
         free((tokens[i]).lexem);
     }
-    // printf(ok ? "Consulta valida\n" : "Consulta invalida\n");
 
-    // return ok ? 0 : 1;
+    free(tokens);
     return 0;
 }
